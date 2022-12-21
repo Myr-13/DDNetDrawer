@@ -1,11 +1,13 @@
 import render
 import config
 import pygame
+import drawer
 
 
 def main():
 	config.default_config()
 	renderer = render.Renderer()
+	draw = drawer.Drawer()
 
 	running = True
 
@@ -14,7 +16,12 @@ def main():
 			if event.type == pygame.QUIT:
 				running = False
 
-		# Add render query here
+			draw.on_event(event)
+
+		draw.update()
+
+		# Render query
+		draw.render(renderer)
 
 		renderer.render()
 
