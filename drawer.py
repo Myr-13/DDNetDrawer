@@ -1,3 +1,5 @@
+import math
+
 import pygame
 import items
 import data
@@ -5,7 +7,7 @@ import ui
 
 
 class Drawer:
-	def __init__(self):
+	def __init__(self, renderer):
 		self.items = []
 
 		# Input
@@ -22,26 +24,49 @@ class Drawer:
 		self.working_item = None
 
 		self.tick = 0
-		self.ui = ui.UI()
+		self.renderer = renderer
+		self.ui = ui.UI(self.renderer)
 
-	def _render_item(self, renderer, item):
+	def _render_item(self, item):
 		if isinstance(item, items.LaserLine):
-			renderer.add_line(item.x1, item.y1, item.x2, item.y2, (255, 255, 255), 7)
-			renderer.add_texture(item.x1 - 12, item.y1 - 12, 24, 24, data.LASERS[int(self.tick % 9 / 3)])
-			renderer.add_texture(item.x2 - 12, item.y2 - 12, 24, 24, data.LASERS[int(self.tick % 9 / 3)])
+			self.renderer.add_line(item.x1, item.y1, item.x2, item.y2, (255, 255, 255), 7)
+			self.renderer.add_texture(item.x1 - 12, item.y1 - 12, 24, 24, data.LASERS[int(self.tick % 9 / 3)])
+			self.renderer.add_texture(item.x2 - 12, item.y2 - 12, 24, 24, data.LASERS[int(self.tick % 9 / 3)])
+		if isinstance(item, items.Pickup):
+			x = item.x + int(math.cos(self.tick / 24) * 4)
+			y = item.y + int(math.sin(self.tick / 24) * 4)
 
-	def render(self, renderer):
+			if item.type == items.PICKUP_ARMOR:
+				self.renderer.add_texture(x, y, 48, 48, data.ARMOR)
+			if item.type == items.PICKUP_HEART:
+				self.renderer.add_texture(x, y, 48, 48, data.HEART)
+			if item.type == items.WEAPON_GUN:
+				self.renderer.add_texture(x, y, 128, 64, data.GUN)
+			if item.type == items.WEAPON_HAMMER:
+				self.renderer.add_texture(x, y, 128, 64, data.HAMMER)
+			if item.type == items.WEAPON_LASER:
+				self.renderer.add_texture(x, y, 256, 96, data.LASER)
+			if item.type == items.WEAPON_GRENADE:
+				self.renderer.add_texture(x, y, 256, 64, data.GRENADE)
+			if item.type == items.WEAPON_SHOTGUN:
+				self.renderer.add_texture(x, y, 256, 64, data.SHOTGUN)
+			if item.type == items.WEAPON_NINJA:
+				self.renderer.add_texture(x, y, 256, 64, data.CATANA)
+
+	def render(self):
 		# Items on screen
 		for item in self.items:
-			self._render_item(renderer, item)
+			self._render_item(item)
 
 		if self.working_item is not None:
-			self._render_item(renderer, self.working_item)
+			self._render_item(self.working_item)
 
 		# UI
-		if self.ui.do_button(0, 100, 20, 20, ""):
+		self.ui.render()
+
+		if self.ui.do_button_texture(0, 24, 48, 48, data.LASER_TOOL, (30, 30, 30)):
 			self.selected_item = items.LaserLine
-		if self.ui.do_button(0, 140, 20, 20, ""):
+		if self.ui.do_button_texture(0, 72, 48, 48, data.PICKUP_TOOL, (30, 30, 30)):
 			self.selected_item = items.Pickup
 
 	def update(self):
@@ -55,12 +80,17 @@ class Drawer:
 
 		self.tick = min(self.tick + 1, 1000)
 
+		if self.ui.ui_clicked:
+			return
+
 		# Add working item
 		# Yapi, shit code
 		if self.selected_item is not None and self.working_item is None:
 			if button_click1:
 				if self.selected_item == items.LaserLine:
 					self.working_item = items.LaserLine(mouse_pos[0], mouse_pos[1], mouse_pos[0], mouse_pos[1])
+				if self.selected_item == items.Pickup:
+					self.working_item = items.Pickup(mouse_pos[0], mouse_pos[1], items.PICKUP_ARMOR)
 
 		# Add working item to self.items array when we release lmb
 		if self.working_item is not None:
@@ -68,10 +98,17 @@ class Drawer:
 				self.items.append(self.working_item)
 				self.working_item = None
 
-		# Line item
-		if self.button_holding1 and isinstance(self.working_item, items.LaserLine):
-			self.working_item.x2 = mouse_pos[0]
-			self.working_item.y2 = mouse_pos[1]
+		if self.button_holding1 and self.working_item is not None:
+			# Line item
+			if isinstance(self.working_item, items.LaserLine):
+				self.working_item.x2 = mouse_pos[0]
+				self.working_item.y2 = mouse_pos[1]
+			else:  # All others items
+				x_offset = 24
+				y_offset = 24
+
+				self.working_item.x = mouse_pos[0] - x_offset
+				self.working_item.y = mouse_pos[1] - y_offset
 
 	def on_event(self, event: pygame.event.Event):
 		if event.type == pygame.MOUSEBUTTONDOWN:

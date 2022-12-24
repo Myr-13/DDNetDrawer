@@ -7,7 +7,7 @@ import drawer
 def main():
 	config.default_config()
 	renderer = render.Renderer()
-	draw = drawer.Drawer()
+	draw = drawer.Drawer(renderer)
 
 	running = True
 
@@ -18,12 +18,11 @@ def main():
 
 			draw.on_event(event)
 
-		draw.update()
-
 		# Render query
-		draw.render(renderer)
-
+		draw.render()
 		renderer.render()
+
+		draw.update()
 
 
 if __name__ == "__main__":
