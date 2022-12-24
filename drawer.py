@@ -84,6 +84,7 @@ class Drawer:
 		self.mouse_pos = [x for x in pygame.mouse.get_pos()]
 		camera_x = self.renderer.camera.x
 		camera_y = self.renderer.camera.y
+		camera_z = self.renderer.camera.zoom
 
 		delta_mouse = [
 			self.mouse_pos[0] - self.old_mouse_pos[0],
@@ -106,8 +107,9 @@ class Drawer:
 			if button_click1:
 				if self.selected_item == items.LaserLine:
 					self.working_item = items.LaserLine(
-						self.mouse_pos[0] + camera_x, self.mouse_pos[1] + camera_y,
-						self.mouse_pos[0] + camera_x, self.mouse_pos[1] + camera_y)
+						(self.mouse_pos[0] + camera_x) * camera_z, (self.mouse_pos[1] + camera_y) * camera_z,
+						(self.mouse_pos[0] + camera_x) * camera_z, (self.mouse_pos[1] + camera_y) * camera_z
+					)
 				if self.selected_item == items.Pickup:
 					self.working_item = items.Pickup(self.mouse_pos[0] + camera_x, self.mouse_pos[1] + camera_y, items.PICKUP_ARMOR)
 
@@ -120,17 +122,18 @@ class Drawer:
 		if self.button_holding1 and self.working_item is not None:
 			# Line item
 			if isinstance(self.working_item, items.LaserLine):
-				self.working_item.x2 = self.mouse_pos[0] + camera_x
-				self.working_item.y2 = self.mouse_pos[1] + camera_y
+				self.working_item.x2 = (self.mouse_pos[0] + camera_x) * camera_z
+				self.working_item.y2 = (self.mouse_pos[1] + camera_y) * camera_z
 			else:  # All others items
 				x_offset = 24
 				y_offset = 24
 
-				self.working_item.x = self.mouse_pos[0] + camera_x - x_offset
-				self.working_item.y = self.mouse_pos[1] + camera_y - y_offset
+				self.working_item.x = (self.mouse_pos[0] + camera_x - x_offset) * camera_z
+				self.working_item.y = (self.mouse_pos[1] + camera_y - y_offset) * camera_z
 
 	def on_event(self, event: pygame.event.Event):
 		if event.type == pygame.MOUSEBUTTONDOWN:
-			rmb = pygame.mouse.get_pressed()[0]
-			mmb = pygame.mouse.get_pressed()[1]
-			lmb = pygame.mouse.get_pressed()[2]
+			if event.button == 4:
+				self.renderer.camera.zoom += 0.05
+			if event.button == 5:
+				self.renderer.camera.zoom -= 0.05

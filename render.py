@@ -49,30 +49,43 @@ class Renderer:
 			if isinstance(cur_obj, RenderRect):
 				cx = self.camera.x
 				cy = self.camera.y
+				cz = self.camera.zoom
 				if cur_obj.ui:
 					cx = 0
 					cy = 0
-				x = cur_obj.x - cx
-				y = cur_obj.y - cy
-				w = cur_obj.w
-				h = cur_obj.h
+					cz = 1
+				x = (cur_obj.x - cx) * cz
+				y = (cur_obj.y - cy) * cz
+				w = cur_obj.w * cz
+				h = cur_obj.h * cz
 				pygame.draw.rect(self.win, cur_obj.color, (x, y, w, h))
 
 			if isinstance(cur_obj, RenderTexture):
 				cx = self.camera.x
 				cy = self.camera.y
+				cz = self.camera.zoom
 				if cur_obj.ui:
 					cx = 0
 					cy = 0
-				x = cur_obj.x - cx
-				y = cur_obj.y - cy
-				self.win.blit(cur_obj.texture, (x, y))
+					cz = 1
+				x = (cur_obj.x - cx) * cz
+				y = (cur_obj.y - cy) * cz
+				w = cur_obj.w * cz
+				h = cur_obj.h * cz
+				texture = pygame.transform.scale(cur_obj.texture, (w, h))
+				self.win.blit(texture, (x, y))
 
 			if isinstance(cur_obj, RenderLine):
 				color = cur_obj.color
-				pfrom = (cur_obj.x1 - self.camera.x, cur_obj.y1 - self.camera.y)
-				pto = (cur_obj.x2 - self.camera.x, cur_obj.y2 - self.camera.y)
-				width = cur_obj.width
+				pfrom = (
+					(cur_obj.x1 - self.camera.x) * self.camera.zoom,
+					(cur_obj.y1 - self.camera.y) * self.camera.zoom
+				)
+				pto = (
+					(cur_obj.x2 - self.camera.x) * self.camera.zoom,
+					(cur_obj.y2 - self.camera.y) * self.camera.zoom
+				)
+				width = int(cur_obj.width * self.camera.zoom)
 
 				pygame.draw.line(self.win, color, pfrom, pto, width)
 

@@ -16,7 +16,8 @@ class RenderTexture:
 	def __init__(self, x: int, y: int, w: int, h: int, texture: pygame.Surface, ui: bool):
 		self.x = x
 		self.y = y
-		texture = pygame.transform.scale(texture, (w, h))
+		self.w = w
+		self.h = h
 		self.texture: pygame.Surface = texture
 		self.ui = ui
 
