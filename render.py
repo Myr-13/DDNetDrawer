@@ -1,35 +1,15 @@
-import math
 from typing import Tuple
-
 import pygame
+
 import config
+from render_items import *
 
 
-class RenderRect:
-	def __init__(self, x: int, y: int, w: int, h: int, color: Tuple[int, int, int]):
-		self.x = x
-		self.y = y
-		self.w = w
-		self.h = h
-		self.color = color
-
-
-class RenderTexture:
-	def __init__(self, x: int, y: int, w: int, h: int, texture: pygame.Surface):
-		self.x = x
-		self.y = y
-		texture = pygame.transform.scale(texture, (w, h))
-		self.texture: pygame.Surface = texture
-
-
-class RenderLine:
-	def __init__(self, x1: int, y1: int, x2: int, y2: int, color: Tuple[int, int, int], width: int):
-		self.x1 = x1
-		self.y1 = y1
-		self.x2 = x2
-		self.y2 = y2
-		self.color = color
-		self.width = width
+class Camera:
+	def __init__(self):
+		self.x = 0
+		self.y = 0
+		self.zoom = 1
 
 
 class Renderer:
@@ -38,23 +18,24 @@ class Renderer:
 		pygame.display.set_caption("DDNetDrawer " + config.conf["VERSION"])
 		self.clock = pygame.time.Clock()
 		self._render_query = []
+		self.camera = Camera()
 
-	def add_rect(self, x: int, y: int, w: int, h: int, color: Tuple[int, int, int]):
-		obj = RenderRect(x, y, w, h, color)
+	def add_rect(self, x: int, y: int, w: int, h: int, color: Tuple[int, int, int], is_ui: bool = False):
+		obj = RenderRect(x, y, w, h, color, is_ui)
 		self._render_query.append(obj)
 
-	def add_texture(self, x: int, y: int, w: int, h: int, image: pygame.Surface):
-		obj = RenderTexture(x, y, w, h, image)
+	def add_texture(self, x: int, y: int, w: int, h: int, image: pygame.Surface, is_ui: bool = False):
+		obj = RenderTexture(x, y, w, h, image, is_ui)
 		self._render_query.append(obj)
 
-	def add_line(self, x1: int, y1: int, x2: int, y2: int, color: Tuple[int, int, int], width: int = 1):
-		obj = RenderLine(x1, y1, x2, y2, color, width)
+	def add_line(self, x1: int, y1: int, x2: int, y2: int, color: Tuple[int, int, int], width: int = 1, is_ui=False):
+		obj = RenderLine(x1, y1, x2, y2, color, width, is_ui)
 		self._render_query.append(obj)
 
-	def add_text(self, x: int, y: int, text: str, color: Tuple[int, int, int], size: int, font: pygame.font.Font):
+	def add_text(self, x: int, y: int, text: str, color: Tuple[int, int, int], size, font: pygame.font.Font, is_ui=False):
 		image = font.render(text, False, color)
 		w, h = image.get_size()
-		obj = RenderTexture(x, y, int(w * size / 256), int(h * size / 256), image)
+		obj = RenderTexture(x, y, int(w * size / 256), int(h * size / 256), image, is_ui)
 		self._render_query.append(obj)
 
 	def render(self):
@@ -66,15 +47,31 @@ class Renderer:
 			cur_obj = self._render_query[i]
 
 			if isinstance(cur_obj, RenderRect):
-				pygame.draw.rect(self.win, cur_obj.color, (cur_obj.x, cur_obj.y, cur_obj.w, cur_obj.h))
+				cx = self.camera.x
+				cy = self.camera.y
+				if cur_obj.ui:
+					cx = 0
+					cy = 0
+				x = cur_obj.x - cx
+				y = cur_obj.y - cy
+				w = cur_obj.w
+				h = cur_obj.h
+				pygame.draw.rect(self.win, cur_obj.color, (x, y, w, h))
 
 			if isinstance(cur_obj, RenderTexture):
-				self.win.blit(cur_obj.texture, (cur_obj.x, cur_obj.y))
+				cx = self.camera.x
+				cy = self.camera.y
+				if cur_obj.ui:
+					cx = 0
+					cy = 0
+				x = cur_obj.x - cx
+				y = cur_obj.y - cy
+				self.win.blit(cur_obj.texture, (x, y))
 
 			if isinstance(cur_obj, RenderLine):
 				color = cur_obj.color
-				pfrom = (cur_obj.x1, cur_obj.y1)
-				pto = (cur_obj.x2, cur_obj.y2)
+				pfrom = (cur_obj.x1 - self.camera.x, cur_obj.y1 - self.camera.y)
+				pto = (cur_obj.x2 - self.camera.x, cur_obj.y2 - self.camera.y)
 				width = cur_obj.width
 
 				pygame.draw.line(self.win, color, pfrom, pto, width)

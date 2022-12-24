@@ -20,8 +20,8 @@ class UI:
 		self.ui_clicked = False
 
 	def do_button(self, x: int, y: int, w: int, h: int, color: Tuple[int, int, int], text: str) -> bool:
-		self.renderer.add_rect(x, y, w, h, color)
-		self.renderer.add_text(x, y, text, (255, 255, 255), 36, data.FONT)
+		self.renderer.add_rect(x, y, w, h, color, True)
+		self.renderer.add_text(x, y, text, (255, 255, 255), 36, data.FONT, True)
 
 		if is_inside((self.mouse_x, self.mouse_y, 1, 1), (x, y, w, h)) and self.mouse_click_b1:
 			self.ui_clicked = True
@@ -29,8 +29,8 @@ class UI:
 		return False
 
 	def do_button_texture(self, x: int, y: int, w: int, h: int, texture: pygame.Surface, color: Tuple[int, int, int]):
-		self.renderer.add_rect(x, y, w, h, color)
-		self.renderer.add_texture(x, y, w, h, texture)
+		self.renderer.add_rect(x, y, w, h, color, True)
+		self.renderer.add_texture(x, y, w, h, texture, True)
 
 		if is_inside((self.mouse_x, self.mouse_y, 1, 1), (x, y, w, h)) and self.mouse_click_b1:
 			self.ui_clicked = True

@@ -13,8 +13,11 @@ class Drawer:
 		# Input
 		self.button_holding1 = False
 		self.button_holding2 = False
+		self.button_holding3 = False
 		self.old_button_holding1 = False
 		self.old_button_holding2 = False
+		self.mouse_pos = [0, 0]
+		self.old_mouse_pos = [0, 0]
 
 		# Select
 		self.selected_item = items.LaserLine
@@ -73,13 +76,27 @@ class Drawer:
 		self.old_button_holding1 = self.button_holding1
 		self.old_button_holding2 = self.button_holding2
 		self.button_holding1 = pygame.mouse.get_pressed()[0]
+		self.button_holding3 = pygame.mouse.get_pressed()[1]
 		self.button_holding2 = pygame.mouse.get_pressed()[2]
 		button_click1 = (self.button_holding1 and not self.old_button_holding1)
 		button_click2 = (self.button_holding2 and not self.old_button_holding2)
-		mouse_pos = pygame.mouse.get_pos()
+		self.old_mouse_pos = self.mouse_pos
+		self.mouse_pos = [x for x in pygame.mouse.get_pos()]
+		camera_x = self.renderer.camera.x
+		camera_y = self.renderer.camera.y
 
-		self.tick = min(self.tick + 1, 1000)
+		delta_mouse = [
+			self.mouse_pos[0] - self.old_mouse_pos[0],
+			self.mouse_pos[1] - self.old_mouse_pos[1]
+		]
 
+		self.tick = (self.tick + 1) % 1000
+
+		if self.button_holding3:
+			self.renderer.camera.x -= delta_mouse[0]
+			self.renderer.camera.y -= delta_mouse[1]
+
+		#                UI
 		if self.ui.ui_clicked:
 			return
 
@@ -88,9 +105,11 @@ class Drawer:
 		if self.selected_item is not None and self.working_item is None:
 			if button_click1:
 				if self.selected_item == items.LaserLine:
-					self.working_item = items.LaserLine(mouse_pos[0], mouse_pos[1], mouse_pos[0], mouse_pos[1])
+					self.working_item = items.LaserLine(
+						self.mouse_pos[0] + camera_x, self.mouse_pos[1] + camera_y,
+						self.mouse_pos[0] + camera_x, self.mouse_pos[1] + camera_y)
 				if self.selected_item == items.Pickup:
-					self.working_item = items.Pickup(mouse_pos[0], mouse_pos[1], items.PICKUP_ARMOR)
+					self.working_item = items.Pickup(self.mouse_pos[0] + camera_x, self.mouse_pos[1] + camera_y, items.PICKUP_ARMOR)
 
 		# Add working item to self.items array when we release lmb
 		if self.working_item is not None:
@@ -101,14 +120,14 @@ class Drawer:
 		if self.button_holding1 and self.working_item is not None:
 			# Line item
 			if isinstance(self.working_item, items.LaserLine):
-				self.working_item.x2 = mouse_pos[0]
-				self.working_item.y2 = mouse_pos[1]
+				self.working_item.x2 = self.mouse_pos[0] + camera_x
+				self.working_item.y2 = self.mouse_pos[1] + camera_y
 			else:  # All others items
 				x_offset = 24
 				y_offset = 24
 
-				self.working_item.x = mouse_pos[0] - x_offset
-				self.working_item.y = mouse_pos[1] - y_offset
+				self.working_item.x = self.mouse_pos[0] + camera_x - x_offset
+				self.working_item.y = self.mouse_pos[1] + camera_y - y_offset
 
 	def on_event(self, event: pygame.event.Event):
 		if event.type == pygame.MOUSEBUTTONDOWN:
